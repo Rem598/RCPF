@@ -9,7 +9,7 @@ let receiptNumber = null;
 let hasGenerated = false;
 let nextItemId = 1;
 
-const RECEIPT_WIDTH = 40; // characters — tuned for 80mm thermal paper at the print font size
+const RECEIPT_WIDTH = 32; // characters — standard thermal-printer width, with margin to spare
 
 /* =========================================================
    DOM REFERENCES
@@ -113,9 +113,9 @@ function twoCol(label, value, width) {
 }
 
 // Three-column item row: name | qty | price (used for both the header and item rows)
-const NAME_W = 20;
-const QTY_W = 6;
-const PRICE_W = RECEIPT_WIDTH - NAME_W - QTY_W; // 14
+const NAME_W = 16;
+const QTY_W = 5;
+const PRICE_W = RECEIPT_WIDTH - NAME_W - QTY_W; // 11
 function itemRow(name, qty, price) {
   return alignLeft(String(name), NAME_W) + alignCenter(String(qty), QTY_W) + alignRight(String(price), PRICE_W);
 }
@@ -288,20 +288,16 @@ function getFooterMessage() {
 function renderReceipt() {
   const businessName = (businessNameInput.value.trim() || 'YOUR BUSINESS NAME').toUpperCase();
   const location = locationInput.value.trim() || 'Your location';
-  const currency = currencySelect.value;
   const dateDisplay = getReceiptDateDisplay();
   const receiptNoDisplay = hasGenerated ? receiptNumber : '— not yet generated —';
   const { subtotal, vat, total, vatEnabled } = calcTotals();
   const footerMessage = getFooterMessage();
 
   const lines = [];
-  lines.push({ text: divider(RECEIPT_WIDTH, '='), cls: 'divider' });
   lines.push({ text: alignCenter(businessName, RECEIPT_WIDTH), cls: 'bold business-name' });
   lines.push({ text: alignCenter(location, RECEIPT_WIDTH), cls: 'location' });
-  lines.push({ text: '', cls: '' });
   lines.push({ text: twoCol('Receipt #:', receiptNoDisplay, RECEIPT_WIDTH), cls: '' });
   lines.push({ text: twoCol('Date:', dateDisplay, RECEIPT_WIDTH), cls: '' });
-  lines.push({ text: twoCol('Currency:', currency, RECEIPT_WIDTH), cls: '' });
   lines.push({ text: divider(RECEIPT_WIDTH, '-'), cls: 'divider' });
   lines.push({ text: itemRow('Item', 'Qty', 'Price'), cls: 'bold' });
 
