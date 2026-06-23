@@ -393,7 +393,7 @@ button:focus-visible {
 
 .receipt-content .r-location {
   text-align: center;
-  margin-top: 8px;
+  margin-top: 16px;
 }
 
 .receipt-content .r-row {
@@ -462,12 +462,12 @@ button:focus-visible {
 .receipt-content .r-total {
   font-weight: 700;
   font-size: 0.98rem;
-  margin-top: 6px;
+  margin-top: 16px;
 }
 
 .receipt-content .r-footer {
   text-align: center;
-  margin-top: 36px;
+  margin-top: 56px;
   color: #444;
 }
 
@@ -524,6 +524,18 @@ button:focus-visible {
   .receipt-content {
     font-size: 9pt;
     line-height: 1.4;
+  }
+
+  .receipt-content .r-location {
+    margin-top: 4px;
+  }
+
+  .receipt-content .r-total {
+    margin-top: 6px;
+  }
+
+  .receipt-content .r-footer {
+    margin-top: 14px;
   }
 
   .preview-hint {
