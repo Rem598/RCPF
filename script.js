@@ -197,10 +197,14 @@ itemsBody.addEventListener('click', (e) => {
    TOTALS
    ========================================================= */
 function calcTotals() {
-  const subtotal = items.reduce((sum, it) => sum + it.qty * it.price, 0);
+  // Item prices are entered VAT-inclusive — the sum of line totals IS the
+  // amount the customer pays, whether or not VAT is broken out below.
+  const total = items.reduce((sum, it) => sum + it.qty * it.price, 0);
   const vatEnabled = vatToggleCheckbox.checked;
-  const vat = vatEnabled ? subtotal * 0.16 : 0;
-  const total = subtotal + vat;
+  const VAT_RATE = 0.16;
+  // Extract the VAT portion already baked into `total`: vat = total * rate/(1+rate)
+  const vat = vatEnabled ? total * (VAT_RATE / (1 + VAT_RATE)) : 0;
+  const subtotal = total - vat;
   return { subtotal, vat, total, vatEnabled };
 }
 
