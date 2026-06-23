@@ -385,16 +385,8 @@ button:focus-visible {
   overflow-x: auto;
 }
 
-.receipt-content .business-name {
-  font-size: 1rem;
-}
-
 .receipt-content .bold {
   font-weight: 700;
-}
-
-.receipt-content .total {
-  font-size: 0.92rem;
 }
 
 .receipt-content .muted {
