@@ -6,7 +6,7 @@
   <title>Receipt Generator</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -40,7 +40,15 @@
           <input type="text" id="location" placeholder="e.g. Westlands, Nairobi" required maxlength="60" />
         </div>
 
-        
+        <div class="field">
+          <label for="currency">Currency</label>
+          <select id="currency">
+            <option value="KES" selected>KES — Kenyan Shilling</option>
+            <option value="USD">USD — US Dollar</option>
+            <option value="EUR">EUR — Euro</option>
+            <option value="GBP">GBP — British Pound</option>
+          </select>
+        </div>
 
         <div class="field field--row">
           <label class="checkbox-label" for="useTodayDate">
@@ -135,7 +143,7 @@
       <div class="preview-sticky">
         <div class="receipt-wrap" id="printArea">
           <div class="receipt-paper" id="receiptPaper">
-            <pre id="receiptContent" class="receipt-content"></pre>
+            <div id="receiptContent" class="receipt-content"></div>
           </div>
         </div>
         <p class="preview-hint">This is how your receipt will look on 80mm thermal paper.</p>
