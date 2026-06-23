@@ -9,8 +9,6 @@ let receiptNumber = null;
 let hasGenerated = false;
 let nextItemId = 1;
 
-const RECEIPT_WIDTH = 32; // characters — standard thermal-printer width, with margin to spare
-
 /* =========================================================
    DOM REFERENCES
    ========================================================= */
@@ -70,54 +68,6 @@ function formatDateDDMMYYYY(date) {
 function generateReceiptNumber() {
   const now = new Date();
   return `RCP-${pad2(now.getHours())}${pad2(now.getMinutes())}${pad2(now.getSeconds())}`;
-}
-
-// Left-pad / right-pad utilities for the monospace receipt layout
-function truncate(str, width) {
-  if (str.length <= width) return str;
-  if (width <= 1) return str.slice(0, width);
-  return str.slice(0, width - 1) + '…';
-}
-
-function alignLeft(str, width) {
-  str = truncate(str, width);
-  return str + ' '.repeat(Math.max(width - str.length, 0));
-}
-
-function alignRight(str, width) {
-  str = truncate(str, width);
-  return ' '.repeat(Math.max(width - str.length, 0)) + str;
-}
-
-function alignCenter(str, width) {
-  str = truncate(str, width);
-  const totalPad = Math.max(width - str.length, 0);
-  const left = Math.floor(totalPad / 2);
-  const right = totalPad - left;
-  return ' '.repeat(left) + str + ' '.repeat(right);
-}
-
-function divider(width, char) {
-  return char.repeat(width);
-}
-
-// Two-column line: label on the left, value flush right
-function twoCol(label, value, width) {
-  label = String(label);
-  value = String(value);
-  const minGap = 1;
-  const maxLabelWidth = Math.max(width - value.length - minGap, 0);
-  label = truncate(label, maxLabelWidth);
-  const gap = Math.max(width - label.length - value.length, minGap);
-  return label + ' '.repeat(gap) + value;
-}
-
-// Three-column item row: name | qty | price (used for both the header and item rows)
-const NAME_W = 16;
-const QTY_W = 5;
-const PRICE_W = RECEIPT_WIDTH - NAME_W - QTY_W; // 11
-function itemRow(name, qty, price) {
-  return alignLeft(String(name), NAME_W) + alignCenter(String(qty), QTY_W) + alignRight(String(price), PRICE_W);
 }
 
 /* =========================================================
@@ -286,43 +236,51 @@ function getFooterMessage() {
    RENDER: THE RECEIPT PREVIEW ITSELF
    ========================================================= */
 function renderReceipt() {
-  const businessName = (businessNameInput.value.trim() || 'YOUR BUSINESS NAME').toUpperCase();
+  const businessName = (businessNameInput.value.trim() || 'Your Business Name').toUpperCase();
   const location = locationInput.value.trim() || 'Your location';
   const dateDisplay = getReceiptDateDisplay();
-  const receiptNoDisplay = hasGenerated ? receiptNumber : '— not yet generated —';
+  const receiptNoDisplay = hasGenerated ? receiptNumber : 'Not yet generated';
   const { subtotal, vat, total, vatEnabled } = calcTotals();
   const footerMessage = getFooterMessage();
 
-  const lines = [];
-  lines.push({ text: alignCenter(businessName, RECEIPT_WIDTH), cls: 'bold business-name' });
-  lines.push({ text: alignCenter(location, RECEIPT_WIDTH), cls: 'location' });
-  lines.push({ text: twoCol('Receipt #:', receiptNoDisplay, RECEIPT_WIDTH), cls: '' });
-  lines.push({ text: twoCol('Date:', dateDisplay, RECEIPT_WIDTH), cls: '' });
-  lines.push({ text: divider(RECEIPT_WIDTH, '-'), cls: 'divider' });
-  lines.push({ text: itemRow('Item', 'Qty', 'Price'), cls: 'bold' });
+  const itemsHtml = items.length === 0
+    ? `<div class="r-empty">No items added yet</div>`
+    : items
+        .map((it) => {
+          const lineTotal = formatMoney(it.qty * it.price);
+          const safeName = escapeHtml(it.name);
+          return `
+        <div class="r-item-row">
+          <span class="r-item-name" title="${safeName}">${safeName}</span>
+          <span class="r-item-qty">${escapeHtml(String(it.qty))}</span>
+          <span class="r-item-price">${lineTotal}</span>
+        </div>`;
+        })
+        .join('');
 
-  if (items.length === 0) {
-    lines.push({ text: alignCenter('No items added yet', RECEIPT_WIDTH), cls: 'muted' });
-  } else {
-    items.forEach((it) => {
-      const lineTotal = formatMoney(it.qty * it.price);
-      lines.push({ text: itemRow(it.name, it.qty, lineTotal), cls: 'item-row' });
-    });
-  }
+  const vatRowHtml = vatEnabled
+    ? `<div class="r-row"><span>VAT (16%)</span><span>${formatMoney(vat)}</span></div>`
+    : '';
 
-  lines.push({ text: divider(RECEIPT_WIDTH, '-'), cls: 'divider' });
-  lines.push({ text: twoCol('Subtotal', formatMoney(subtotal), RECEIPT_WIDTH), cls: '' });
-  if (vatEnabled) {
-    lines.push({ text: twoCol('VAT (16%)', formatMoney(vat), RECEIPT_WIDTH), cls: '' });
-  }
-  lines.push({ text: divider(RECEIPT_WIDTH, '='), cls: 'divider' });
-  lines.push({ text: twoCol('TOTAL', formatMoney(total), RECEIPT_WIDTH), cls: 'bold total' });
-  lines.push({ text: '', cls: '' });
-  lines.push({ text: alignCenter(footerMessage, RECEIPT_WIDTH), cls: 'footer-msg' });
-
-  receiptContent.innerHTML = lines
-    .map((line) => `<span class="${line.cls}">${escapeHtml(line.text)}</span>`)
-    .join('\n');
+  receiptContent.innerHTML = `
+    <div class="r-business" title="${escapeHtml(businessName)}">${escapeHtml(businessName)}</div>
+    <div class="r-location">${escapeHtml(location)}</div>
+    <div class="r-row"><span>Receipt #:</span><span>${escapeHtml(receiptNoDisplay)}</span></div>
+    <div class="r-row"><span>Date:</span><span>${escapeHtml(dateDisplay)}</span></div>
+    <div class="r-divider"></div>
+    <div class="r-item-row r-item-header">
+      <span class="r-item-name">Item</span>
+      <span class="r-item-qty">Qty</span>
+      <span class="r-item-price">Price</span>
+    </div>
+    ${itemsHtml}
+    <div class="r-divider"></div>
+    <div class="r-row"><span>Subtotal</span><span>${formatMoney(subtotal)}</span></div>
+    ${vatRowHtml}
+    <div class="r-divider r-divider--strong"></div>
+    <div class="r-row r-total"><span>TOTAL</span><span>${formatMoney(total)}</span></div>
+    <div class="r-footer">${escapeHtml(footerMessage)}</div>
+  `;
 }
 
 /* =========================================================
