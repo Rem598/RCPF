@@ -469,7 +469,7 @@ button:focus-visible {
 
 .receipt-content .r-footer {
   text-align: center;
-  margin-top: 90px;
+  margin-top: 70px;
   color: #444;
 }
 
@@ -537,7 +537,7 @@ button:focus-visible {
   }
 
   .receipt-content .r-footer {
-    margin-top: 14px;
+    margin-top: 70px;
   }
 
   .preview-hint {
