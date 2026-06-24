@@ -6,6 +6,7 @@
 let items = [];          // { id, name, qty, price }
 let editingId = null;    // id of item currently being edited, or null
 let receiptNumber = null;
+let generatedAt = null;  // Date — the exact moment Generate was clicked; drives both receiptNumber and the Time line
 let hasGenerated = false;
 let nextItemId = 1;
 
@@ -35,9 +36,11 @@ const customFooterInput = document.getElementById('customFooterInput');
 
 const generateBtn = document.getElementById('generateBtn');
 const printBtn = document.getElementById('printBtn');
+const downloadImageBtn = document.getElementById('downloadImageBtn');
 const darkModeToggle = document.getElementById('darkModeToggle');
 
 const receiptContent = document.getElementById('receiptContent');
+const receiptPaperEl = document.getElementById('receiptPaper');
 
 /* =========================================================
    HELPERS
@@ -65,9 +68,13 @@ function formatDateDDMMYYYY(date) {
   return `${pad2(date.getDate())}/${pad2(date.getMonth() + 1)}/${date.getFullYear()}`;
 }
 
-function generateReceiptNumber() {
-  const now = new Date();
-  return `RCP-${pad2(now.getHours())}${pad2(now.getMinutes())}${pad2(now.getSeconds())}`;
+// HH:MM, 24-hour
+function formatTimeHHMM(date) {
+  return `${pad2(date.getHours())}:${pad2(date.getMinutes())}`;
+}
+
+function generateReceiptNumber(date) {
+  return `RCP-${pad2(date.getHours())}${pad2(date.getMinutes())}${pad2(date.getSeconds())}`;
 }
 
 /* =========================================================
@@ -243,6 +250,7 @@ function renderReceipt() {
   const businessName = (businessNameInput.value.trim() || 'Your Business Name').toUpperCase();
   const location = locationInput.value.trim() || 'Your location';
   const dateDisplay = getReceiptDateDisplay();
+  const dateTimeDisplay = hasGenerated ? `${dateDisplay} ${formatTimeHHMM(generatedAt)}` : dateDisplay;
   const receiptNoDisplay = hasGenerated ? receiptNumber : 'Not yet generated';
   const { subtotal, vat, total, vatEnabled } = calcTotals();
   const footerMessage = getFooterMessage();
@@ -270,7 +278,7 @@ function renderReceipt() {
     <div class="r-business" title="${escapeHtml(businessName)}">${escapeHtml(businessName)}</div>
     <div class="r-location">${escapeHtml(location)}</div>
     <div class="r-row"><span>Receipt #:</span><span>${escapeHtml(receiptNoDisplay)}</span></div>
-    <div class="r-row"><span>Date:</span><span>${escapeHtml(dateDisplay)}</span></div>
+    <div class="r-row"><span>Date:</span><span>${escapeHtml(dateTimeDisplay)}</span></div>
     <div class="r-divider"></div>
     <div class="r-item-row r-item-header">
       <span class="r-item-name">Item</span>
@@ -288,23 +296,65 @@ function renderReceipt() {
 }
 
 /* =========================================================
-   GENERATE / PRINT
+   GENERATE / PRINT / DOWNLOAD
    ========================================================= */
 function handleGenerate() {
   if (!validateBusinessFields()) return;
-  receiptNumber = generateReceiptNumber();
+  generatedAt = new Date();
+  receiptNumber = generateReceiptNumber(generatedAt);
   hasGenerated = true;
   renderReceipt();
 }
 
-function handlePrint() {
-  if (!validateBusinessFields()) return;
+// Used by Print and Download — stamps a receipt number only if one doesn't already exist,
+// so repeat clicks reuse the same number instead of changing it underneath you.
+function ensureGenerated() {
   if (!hasGenerated) {
-    receiptNumber = generateReceiptNumber();
+    generatedAt = new Date();
+    receiptNumber = generateReceiptNumber(generatedAt);
     hasGenerated = true;
     renderReceipt();
   }
+}
+
+function handlePrint() {
+  if (!validateBusinessFields()) return;
+  ensureGenerated();
   window.print();
+}
+
+async function handleDownloadImage() {
+  if (!validateBusinessFields()) return;
+  ensureGenerated();
+
+  if (typeof html2canvas !== 'function') {
+    alert('The image export library failed to load. Check your internet connection and try again.');
+    return;
+  }
+
+  const originalLabel = downloadImageBtn.textContent;
+  downloadImageBtn.disabled = true;
+  downloadImageBtn.textContent = 'Preparing image…';
+
+  try {
+    // Note: the torn-paper edge (clip-path) may not render in the exported
+    // image — html2canvas doesn't reliably support CSS clip-path. The
+    // downloaded PNG will likely have clean rectangular corners instead.
+    const canvas = await html2canvas(receiptPaperEl, {
+      backgroundColor: '#fdfdf6',
+      scale: 2, // sharper output than the on-screen size
+    });
+    const link = document.createElement('a');
+    link.download = `${receiptNumber}.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  } catch (err) {
+    console.error('Receipt image export failed:', err);
+    alert('Sorry, something went wrong creating the image. Please try again.');
+  } finally {
+    downloadImageBtn.disabled = false;
+    downloadImageBtn.textContent = originalLabel;
+  }
 }
 
 /* =========================================================
@@ -345,6 +395,7 @@ cancelEditBtn.addEventListener('click', exitEditMode);
 
 generateBtn.addEventListener('click', handleGenerate);
 printBtn.addEventListener('click', handlePrint);
+downloadImageBtn.addEventListener('click', handleDownloadImage);
 darkModeToggle.addEventListener('click', toggleDarkMode);
 
 useTodayDateCheckbox.addEventListener('change', () => {
