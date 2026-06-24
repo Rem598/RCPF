@@ -466,6 +466,13 @@ button:focus-visible {
   margin-top: 16px;
 }
 
+.receipt-content .r-payment {
+  text-align: center;
+  font-style: italic;
+  margin-top: 14px;
+  color: #444;
+}
+
 .receipt-content .r-footer {
   text-align: center;
   margin-top: 70px;
