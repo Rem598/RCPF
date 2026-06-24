@@ -16,6 +16,7 @@ let nextItemId = 1;
 const businessNameInput = document.getElementById('businessName');
 const locationInput = document.getElementById('location');
 const currencySelect = document.getElementById('currency');
+const paymentMethodSelect = document.getElementById('paymentMethod');
 const useTodayDateCheckbox = document.getElementById('useTodayDate');
 const customDateField = document.getElementById('customDateField');
 const customDateInput = document.getElementById('customDate');
@@ -291,6 +292,7 @@ function renderReceipt() {
     ${vatRowHtml}
     <div class="r-divider r-divider--strong"></div>
     <div class="r-row r-total"><span>TOTAL</span><span>${formatMoney(total)}</span></div>
+    <div class="r-payment">Payment (${escapeHtml(paymentMethodSelect.value)})</div>
     <div class="r-footer">${escapeHtml(footerMessage)}</div>
   `;
 }
@@ -405,6 +407,7 @@ useTodayDateCheckbox.addEventListener('change', () => {
 customDateInput.addEventListener('change', renderReceipt);
 vatToggleCheckbox.addEventListener('change', renderReceipt);
 currencySelect.addEventListener('change', renderReceipt);
+paymentMethodSelect.addEventListener('change', renderReceipt);
 businessNameInput.addEventListener('input', renderReceipt);
 locationInput.addEventListener('input', renderReceipt);
 
